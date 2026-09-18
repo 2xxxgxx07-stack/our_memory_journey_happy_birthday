@@ -15,6 +15,8 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- LZ-String: URL Compression for seamless cross-device sharing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -136,6 +138,12 @@
       <span id="modeText" class="hidden sm:inline">Preview</span>
     </button>
 
+    <!-- Share to Girlfriend Button -->
+    <button id="openShareModalBtn" class="edit-control flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-3.5 py-2 rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 text-xs sm:text-sm font-medium">
+      <i data-lucide="share-2" class="w-4 h-4"></i>
+      <span class="hidden sm:inline">แชร์ให้แฟน (ลิงก์/QR)</span>
+    </button>
+
     <!-- Ambient Music Toggle (Web Audio API Synthesizer) -->
     <button id="musicToggle" class="group flex items-center gap-2 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-full border border-rose-200 shadow-md hover:shadow-lg transition-all active:scale-95 text-xs sm:text-sm font-medium text-rose-700">
       <span id="musicIconContainer" class="w-4 h-4 flex items-center justify-center">
@@ -147,7 +155,7 @@
     <!-- Main Customize / Settings Button -->
     <button id="openCustomizeModal" class="edit-control group flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white px-3.5 py-2 rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 text-xs sm:text-sm font-medium">
       <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
-      <span class="hidden sm:inline">ตั้งค่าเว็บ & รูปภาพ</span>
+      <span class="hidden sm:inline">ตั้งค่าเว็บ</span>
     </button>
   </header>
 
@@ -202,12 +210,17 @@
         </p>
       </div>
 
-      <!-- Quick Action Guide in Edit Mode -->
-      <div class="edit-control inline-block">
-        <span class="bg-amber-100/90 text-amber-800 text-xs px-3.5 py-1.5 rounded-full border border-amber-300 inline-flex items-center gap-1.5">
-          <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600"></i>
-          โหมดแก้ไขเปิดอยู่: คุณสามารถกดไอคอนดินสอที่การ์ดเพื่อเปลี่ยนรูปและข้อความลับหลังรูปได้เลย
-        </span>
+      <!-- Step-by-step How to Share Banner (Visible in Edit Mode) -->
+      <div class="edit-control max-w-lg mx-auto text-left bg-white/90 backdrop-blur-md border border-rose-200 p-4 rounded-2xl shadow-sm space-y-2">
+        <div class="flex items-center gap-2 text-rose-600 font-semibold text-xs sm:text-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>วิธีส่งให้แฟนเปิดในมือถือหรือคอมเครื่องอื่น:</span>
+        </div>
+        <ol class="text-[11px] sm:text-xs text-slate-600 space-y-1 pl-4 list-decimal">
+          <li>กดไอคอนดินสอบนการ์ดเพื่อเปลี่ยนรูปและข้อความลับหลังรูป</li>
+          <li>เมื่อแต่งครบแล้ว กดปุ่มสีเขียว <b>"แชร์ให้แฟน (ลิงก์/QR)"</b> ด้านบน</li>
+          <li>ส่งลิงก์ หรือเซฟรูป <b>QR Code</b> ไปแปะในการ์ดวันเกิด ให้แฟนสแกนเปิดดูได้ทันที</li>
+        </ol>
       </div>
 
       <!-- CTA Button -->
@@ -560,6 +573,73 @@
     </div>
   </div>
 
+  <!-- MODAL 3: Share Link & Instant QR Code Modal -->
+  <div id="shareModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 my-8 max-h-[92vh] overflow-y-auto text-center">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 text-left">
+        <div>
+          <h3 class="font-serif text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="send" class="w-5 h-5 text-emerald-500"></i>
+            <span>สร้างลิงก์ & QR Code ให้แฟน</span>
+          </h3>
+          <p class="text-xs text-slate-400">แฟนเปิดจากเครื่องไหนก็เห็นรูปและข้อความครบ 100%</p>
+        </div>
+        <button id="closeShareModal" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Generated QR Code Container -->
+      <div class="flex flex-col items-center justify-center p-4 bg-rose-50/60 rounded-2xl border border-rose-100 space-y-3">
+        <div class="p-3 bg-white rounded-2xl shadow-md inline-block">
+          <img id="shareQrImage" src="" alt="QR Code" class="w-44 h-44 sm:w-48 sm:h-48 object-contain" />
+        </div>
+        <p class="text-xs text-slate-600">
+          สแกนด้วยมือถือ หรือคลิกขวาบันทึกรูป QR ไปปริ้นต์แปะบนการ์ดของขวัญได้เลย 🎁
+        </p>
+      </div>
+
+      <!-- Shareable URL Input & Copy Button -->
+      <div class="space-y-2 text-left">
+        <label class="block text-xs font-semibold text-slate-700">ลิงก์เว็บสำหรับส่งทางแชท (LINE / Messenger / IG):</label>
+        <div class="flex gap-2">
+          <input id="shareUrlInput" type="text" readonly class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-600 select-all font-mono" />
+          <button id="copyShareUrlBtn" class="flex-shrink-0 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-medium shadow flex items-center gap-1.5 active:scale-95 transition-all">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copyBtnText">คัดลอกลิงก์</span>
+          </button>
+        </div>
+        <p id="urlStatusNote" class="text-[11px] text-slate-400">
+          💡 ระบบบีบอัดข้อมูลรูปและข้อความใส่ในลิงก์ให้อัตโนมัติ โดยไม่ต้องมีเซิร์ฟเวอร์
+        </p>
+      </div>
+
+      <!-- JSON Backup / Restore Option -->
+      <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex gap-2">
+          <button id="downloadBackupBtn" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium flex items-center gap-1">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>โหลดไฟล์สำรอง (.json)</span>
+          </button>
+          <label class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium cursor-pointer flex items-center gap-1">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            <span>เปิดไฟล์สำรอง</span>
+            <input type="file" id="importBackupInput" accept=".json" class="hidden" />
+          </label>
+        </div>
+        <button id="closeShareModalFooterBtn" class="px-4 py-1.5 rounded-lg bg-slate-800 text-white font-medium hover:bg-slate-900">
+          เสร็จสิ้น
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toastNotification" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/90 backdrop-blur-md text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-2xl flex items-center gap-2 opacity-0 pointer-events-none transition-opacity duration-300">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toastMessage">คัดลอกลิงก์สำเร็จแล้ว!</span>
+  </div>
+
   <!-- Footer -->
   <footer class="py-8 text-center text-xs text-slate-400 border-t border-rose-100 bg-[#FFF9FA]">
     <p>Crafted with endless love for your special day ❤️</p>
@@ -569,10 +649,10 @@
   <script>
     // --- Default Sample Data ---
     const initialDefaultData = {
-      partnerName: "Primrose",
+      partnerName: "หมูอ้วน",
       senderName: "แฟนของเธอเอง",
       heroSubtitle: "ยินดีต้อนรับสู่บันทึกความทรงจำของเรา ขอบคุณที่เกิดมาเป็นรอยยิ้มและความสุขในทุกๆ วันนะ",
-      startDate: "2025-11-24T00:00",
+      startDate: "2023-01-14T19:00",
       couponTitle: "สิทธิ์สั่งอะไรก็ได้ 1 วันเต็ม + ดินเนอร์มื้อโปรด",
       couponDesc: "ไม่ว่าจะอยากกินโอมากาเสะ ชาบู หรือให้ตามใจทั้งวัน คูปองนี้ใช้ได้ไม่มีวันหมดอายุ!",
       letterContent: `สุขสันต์วันเกิดนะ! ขอให้ปีนี้เป็นปีที่ใจดีกับเธอ มีรอยยิ้มเยอะๆ สุขภาพแข็งแรง ไม่ปวดหลังเวลาทำงานนะ\n\nขอบคุณที่คอยอยู่ข้างๆ กัน คอยหัวเราะด้วยกัน และเป็นความสบายใจให้เค้าเสมอ ไม่ว่าจะเจอวันที่เหนื่อยแค่ไหน แค่ได้คุยกับเธอก็หายเหนื่อยแล้ว\n\nสัญญาว่าจะอยู่ฉลองวันเกิดให้เธอแบบนี้ไปอีกหลายๆ ปีเลย รักเธอที่สุดในโลกเลยนะ ❤️`,
@@ -634,6 +714,34 @@
     let appData = JSON.parse(localStorage.getItem('bday_app_data_v2')) || initialDefaultData;
     let isViewOnlyMode = false;
 
+    // Check if loaded with compressed data payload from URL hash (Share Link Mode)
+    function checkUrlPayload() {
+      if (window.location.hash && window.location.hash.startsWith('#data=')) {
+        try {
+          const encoded = window.location.hash.replace('#data=', '');
+          const decompressed = LZString.decompressFromEncodedURIComponent(encoded);
+          if (decompressed) {
+            const parsed = JSON.parse(decompressed);
+            if (parsed && parsed.milestones) {
+              appData = parsed;
+              // Auto-switch to Girlfriend / Read-Only view mode
+              isViewOnlyMode = true;
+              document.body.classList.add('view-mode');
+              const modeText = document.getElementById('modeText');
+              const modeIcon = document.getElementById('modeIcon');
+              if (modeText && modeIcon) {
+                modeText.textContent = "Exit Preview";
+                modeIcon.setAttribute('data-lucide', 'edit-2');
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Could not parse shared link data:", e);
+        }
+      }
+    }
+    checkUrlPayload();
+
     function saveAppData() {
       try {
         localStorage.setItem('bday_app_data_v2', JSON.stringify(appData));
@@ -642,8 +750,8 @@
       }
     }
 
-    // Helper: Compress user uploaded image on client side before storage
-    function compressImageFile(file, maxWidth = 800, quality = 0.7) {
+    // Helper: Compress user uploaded image on client side before storage (450px lightweight for URL encoding)
+    function compressImageFile(file, maxWidth = 450, quality = 0.6) {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -668,6 +776,16 @@
           };
         };
       });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMessage');
+      toastMsg.textContent = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
     }
 
     // --- STREAMING_CHUNK:Rendering Timeline Cards with In-Place Edit Controls... ---
@@ -1159,6 +1277,100 @@
 
     closeModalBtn.addEventListener('click', closeModal);
     cancelModalBtn.addEventListener('click', closeModal);
+
+    // --- STREAMING_CHUNK:Share Modal & QR Code Generation Logic... ---
+    const shareModal = document.getElementById('shareModal');
+    const openShareModalBtn = document.getElementById('openShareModalBtn');
+    const closeShareModal = document.getElementById('closeShareModal');
+    const closeShareModalFooterBtn = document.getElementById('closeShareModalFooterBtn');
+    const shareUrlInput = document.getElementById('shareUrlInput');
+    const copyShareUrlBtn = document.getElementById('copyShareUrlBtn');
+    const copyBtnText = document.getElementById('copyBtnText');
+    const shareQrImage = document.getElementById('shareQrImage');
+    const downloadBackupBtn = document.getElementById('downloadBackupBtn');
+    const importBackupInput = document.getElementById('importBackupInput');
+
+    function generateShareUrl() {
+      const serialized = JSON.stringify(appData);
+      const compressed = LZString.compressToEncodedURIComponent(serialized);
+      const baseUrl = window.location.origin + window.location.pathname;
+      return `${baseUrl}#data=${compressed}`;
+    }
+
+    openShareModalBtn.addEventListener('click', () => {
+      const fullUrl = generateShareUrl();
+      shareUrlInput.value = fullUrl;
+
+      // Generate dynamic QR Code via API
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fullUrl)}`;
+      shareQrImage.src = qrApiUrl;
+
+      // Length warning if images make link excessively long
+      const urlStatusNote = document.getElementById('urlStatusNote');
+      if (fullUrl.length > 30000) {
+        urlStatusNote.innerHTML = `⚠️ <span class="text-amber-600 font-medium">รูปที่อัปโหลดมีขนาดค่อนข้างใหญ่ แนะนำให้สแกนผ่าน QR Code หรือใช้ลิงก์รูปภาพออนไลน์ (เช่น Imgur/Unsplash) จะส่งผ่านแชทได้ง่ายกว่าครับ</span>`;
+      } else {
+        urlStatusNote.innerHTML = `💡 ระบบบีบอัดข้อมูลรูปและข้อความใส่ในลิงก์ให้อัตโนมัติ โดยไม่ต้องมีเซิร์ฟเวอร์`;
+      }
+
+      shareModal.classList.remove('hidden');
+    });
+
+    closeShareModal.addEventListener('click', () => shareModal.classList.add('hidden'));
+    closeShareModalFooterBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
+
+    copyShareUrlBtn.addEventListener('click', () => {
+      shareUrlInput.select();
+      shareUrlInput.setSelectionRange(0, 99999);
+      try {
+        document.execCommand('copy');
+        copyBtnText.textContent = "คัดลอกแล้ว!";
+        showToast("คัดลอกลิงก์สำหรับส่งให้แฟนแล้ว! ❤️");
+        setTimeout(() => { copyBtnText.textContent = "คัดลอกลิงก์"; }, 2000);
+      } catch (err) {
+        navigator.clipboard.writeText(shareUrlInput.value).then(() => {
+          copyBtnText.textContent = "คัดลอกแล้ว!";
+          showToast("คัดลอกลิงก์สำเร็จแล้ว!");
+          setTimeout(() => { copyBtnText.textContent = "คัดลอกลิงก์"; }, 2000);
+        });
+      }
+    });
+
+    // Backup & Restore as JSON File
+    downloadBackupBtn.addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `birthday_gift_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("ดาวน์โหลดไฟล์สำรองแล้ว 💾");
+    });
+
+    importBackupInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (imported && imported.milestones) {
+            appData = imported;
+            saveAppData();
+            renderTimeline();
+            applyDataToDOM();
+            updateLoveCounter();
+            shareModal.classList.add('hidden');
+            showToast("กู้คืนข้อมูลสำเร็จแล้ว ✨");
+            launchRomanticConfetti();
+          }
+        } catch (err) {
+          showToast("ไฟล์ข้อมูลไม่ถูกต้อง");
+        }
+      };
+      reader.readAsText(file);
+    });
 
     saveModalBtn.addEventListener('click', () => {
       appData.partnerName = document.getElementById('inputPartnerName').value.trim() || appData.partnerName;
