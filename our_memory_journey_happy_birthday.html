@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="th" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Memory Journey: Happy Birthday</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Prompt & Playfair Display & Mali -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,300;0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Playfair Display"', 'serif'],
+            sans: ['"Prompt"', 'sans-serif'],
+            hand: ['"Mali"', 'cursive'],
+          },
+          colors: {
+            rosewater: '#FFF1F2',
+            blush: '#FFE4E6',
+            petal: '#F43F5E',
+            romantic: '#BE123C',
+            champagne: '#FAF5EF',
+          },
+          animation: {
+            'float-slow': 'float 6s ease-in-out infinite',
+            'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
+            'wiggle': 'wiggle 1s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateY(-12px) rotate(1.5deg)' },
+            },
+            pulseSubtle: {
+              '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+              '50%': { transform: 'scale(1.04)', opacity: '0.92' },
+            },
+            wiggle: {
+              '0%, 100%': { transform: 'rotate(-3deg)' },
+              '50%': { transform: 'rotate(3deg)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Polaroid 3D Flip Styles */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    
+    /* Washi Tape Effect */
+    .washi-tape {
+      background: rgba(254, 205, 211, 0.85);
+      backdrop-filter: blur(2px);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    /* Floating Heart Particles */
+    .floating-heart {
+      position: fixed;
+      pointer-events: none;
+      z-index: 40;
+      animation: floatUp 2.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+    @keyframes floatUp {
+      0% {
+        transform: translate(0, 0) scale(0.6);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--tw-tx, 0px), -130px) scale(1.3);
+        opacity: 0;
+      }
+    }
+
+    /* Flame Flicker Animation */
+    .candle-flame {
+      transform-origin: center bottom;
+      animation: flicker 0.65s infinite alternate ease-in-out;
+    }
+    @keyframes flicker {
+      0% { transform: scale(1) rotate(-2deg); opacity: 0.95; filter: drop-shadow(0 0 6px #f59e0b); }
+      50% { transform: scale(1.08, 1.15) rotate(2deg); opacity: 1; filter: drop-shadow(0 0 12px #fbbf24); }
+      100% { transform: scale(0.95, 0.92) rotate(-1deg); opacity: 0.88; filter: drop-shadow(0 0 8px #f59e0b); }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FFF5F6;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #FECDD3;
+      border-radius: 9999px;
+    }
+
+    /* In view mode, hide edit buttons */
+    body.view-mode .edit-control {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body class="bg-[#FFF9FA] text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-rose-200 selection:text-rose-900">
+
+  <header class="fixed top-3 right-3 z-50 flex items-center gap-2">
+    <!-- View / Edit Mode Toggle -->
+    <button id="modeToggleBtn" title="สลับโหมด พรีวิว/แก้ไข" class="flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-2 rounded-full border border-rose-200 shadow-md hover:shadow-lg transition-all active:scale-95 text-xs font-medium text-slate-700">
+      <i id="modeIcon" data-lucide="eye" class="w-4 h-4 text-rose-500"></i>
+      <span id="modeText" class="hidden sm:inline">Preview</span>
+    </button>
+
+    <!-- Ambient Music Toggle (Web Audio API Synthesizer) -->
+    <button id="musicToggle" class="group flex items-center gap-2 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-full border border-rose-200 shadow-md hover:shadow-lg transition-all active:scale-95 text-xs sm:text-sm font-medium text-rose-700">
+      <span id="musicIconContainer" class="w-4 h-4 flex items-center justify-center">
+        <i data-lucide="volume-x" class="w-4 h-4"></i>
+      </span>
+      <span id="musicStatusText" class="hidden sm:inline">Play Melody</span>
+    </button>
+
+    <!-- Main Customize / Settings Button -->
+    <button id="openCustomizeModal" class="edit-control group flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white px-3.5 py-2 rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 text-xs sm:text-sm font-medium">
+      <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+      <span class="hidden sm:inline">ตั้งค่าเว็บ & รูปภาพ</span>
+    </button>
+  </header>
+
+  <section class="min-h-screen relative flex flex-col items-center justify-center px-4 sm:px-6 py-16 text-center overflow-hidden bg-gradient-to-b from-rose-100/60 via-pink-50/40 to-[#FFF9FA]">
+    <!-- Ambient Background Blobs -->
+    <div class="absolute -top-24 -left-20 w-80 h-80 bg-rose-200/50 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-20 -right-20 w-96 h-96 bg-pink-200/40 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 max-w-2xl mx-auto space-y-6">
+      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-100 text-rose-700 text-xs sm:text-sm font-medium tracking-wide shadow-sm">
+        <i data-lucide="heart" class="w-3.5 h-3.5 fill-current animate-pulse text-rose-500"></i>
+        A Special Birthday Gift for You
+      </span>
+
+      <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-slate-900 leading-tight">
+        Happy Birthday,<br/>
+        <span id="heroPartnerName" class="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-600 to-rose-700 font-hand">
+          Baby
+        </span> ✨
+      </h1>
+
+      <p id="heroSubtitle" class="text-base sm:text-lg text-slate-600 font-light max-w-md mx-auto leading-relaxed">
+        ยินดีต้อนรับสู่บันทึกความทรงจำของเรา ขอบคุณที่เกิดมาเป็นรอยยิ้มและความสุขในทุกๆ วันนะ
+      </p>
+
+      <!-- Romantic Love Counter Card -->
+      <div class="bg-white/85 backdrop-blur-md border border-rose-200/70 p-5 sm:p-6 rounded-3xl shadow-xl shadow-rose-100/70 max-w-md mx-auto transform transition hover:scale-[1.02]">
+        <p class="text-xs uppercase tracking-widest font-semibold text-rose-500 mb-3">
+          We've been creating memories for
+        </p>
+        
+        <div class="grid grid-cols-4 gap-2 sm:gap-3 text-center">
+          <div class="bg-rose-50/80 rounded-2xl p-2 sm:p-3 border border-rose-100">
+            <span id="cntDays" class="block font-serif text-xl sm:text-3xl font-bold text-rose-700">00</span>
+            <span class="text-[10px] sm:text-xs text-rose-500 font-medium">วัน</span>
+          </div>
+          <div class="bg-rose-50/80 rounded-2xl p-2 sm:p-3 border border-rose-100">
+            <span id="cntHours" class="block font-serif text-xl sm:text-3xl font-bold text-rose-700">00</span>
+            <span class="text-[10px] sm:text-xs text-rose-500 font-medium">ชั่วโมง</span>
+          </div>
+          <div class="bg-rose-50/80 rounded-2xl p-2 sm:p-3 border border-rose-100">
+            <span id="cntMins" class="block font-serif text-xl sm:text-3xl font-bold text-rose-700">00</span>
+            <span class="text-[10px] sm:text-xs text-rose-500 font-medium">นาที</span>
+          </div>
+          <div class="bg-rose-50/80 rounded-2xl p-2 sm:p-3 border border-rose-100">
+            <span id="cntSecs" class="block font-serif text-xl sm:text-3xl font-bold text-rose-700">00</span>
+            <span class="text-[10px] sm:text-xs text-rose-500 font-medium">วินาที</span>
+          </div>
+        </div>
+        <p class="mt-3 text-[11px] text-slate-400 font-light italic">
+          ...และจะยังคงนับต่อไปในทุกๆ วัน ❤️
+        </p>
+      </div>
+
+      <!-- Quick Action Guide in Edit Mode -->
+      <div class="edit-control inline-block">
+        <span class="bg-amber-100/90 text-amber-800 text-xs px-3.5 py-1.5 rounded-full border border-amber-300 inline-flex items-center gap-1.5">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600"></i>
+          โหมดแก้ไขเปิดอยู่: คุณสามารถกดไอคอนดินสอที่การ์ดเพื่อเปลี่ยนรูปและข้อความลับหลังรูปได้เลย
+        </span>
+      </div>
+
+      <!-- CTA Button -->
+      <div class="pt-2">
+        <a href="#journey" class="inline-flex items-center gap-2.5 px-8 py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-medium rounded-full shadow-lg shadow-rose-300 hover:shadow-rose-400 hover:from-rose-600 hover:to-pink-600 transform hover:-translate-y-0.5 transition-all duration-300">
+          <span>เริ่มออกเดินทางย้อนเวลา</span>
+          <i data-lucide="arrow-down" class="w-4 h-4 animate-bounce"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="journey" class="py-20 px-4 sm:px-6 max-w-4xl mx-auto relative">
+    <div class="text-center mb-16 space-y-3">
+      <span class="text-rose-500 font-medium text-sm tracking-wider uppercase">Our Memory Chapters</span>
+      <h2 class="font-serif text-3xl sm:text-4xl font-bold text-slate-900">บันทึกเส้นทางของเรา</h2>
+      <p class="text-slate-500 text-sm max-w-md mx-auto">
+        (แตะหรือคลิกที่รูปภาพเพื่อพลิกอ่าน <span class="text-rose-600 font-medium">ข้อความลับด้านหลังการ์ด</span> นะ)
+      </p>
+
+      <!-- Add New Memory Card Button (Visible in Edit Mode) -->
+      <div class="edit-control pt-2">
+        <button id="addNewCardBtn" class="inline-flex items-center gap-2 bg-white text-rose-600 hover:bg-rose-50 border-2 border-dashed border-rose-300 px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-sm hover:shadow transition-all">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>เพิ่มการ์ดความทรงจำใหม่</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Center Line for Timeline -->
+    <div class="relative">
+      <div class="absolute left-4 sm:left-1/2 top-4 bottom-12 w-0.5 bg-gradient-to-b from-rose-300 via-pink-200 to-rose-400 transform sm:-translate-x-1/2"></div>
+
+      <!-- Timeline Cards Container -->
+      <div id="timelineList" class="space-y-12 sm:space-y-20">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <section id="cakeSection" class="py-24 px-4 sm:px-6 bg-gradient-to-b from-[#FFF9FA] via-rose-50/50 to-pink-100/60 relative overflow-hidden">
+    <div class="max-w-3xl mx-auto text-center space-y-6 relative z-10">
+      <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rose-200/60 text-rose-800 text-xs font-semibold">
+        🎂 The Birthday Moment
+      </span>
+      <h2 class="font-serif text-3xl sm:text-5xl font-bold text-slate-900">
+        อธิษฐานแล้วเป่าเทียนนะ!
+      </h2>
+      <p class="text-slate-600 text-sm sm:text-base max-w-md mx-auto">
+        หลับตาคิดถึงสิ่งที่อยากได้มากที่สุดในปีนี้ แล้วกดปุ่มเป่าเทียนเพื่อรับคำอวยพร
+      </p>
+
+      <!-- SVG Animated Birthday Cake -->
+      <div class="relative my-10 flex flex-col items-center justify-center">
+        <div id="cakeWrapper" class="relative cursor-pointer select-none transition-transform hover:scale-105 active:scale-95 duration-300">
+          
+          <!-- Smoke effect -->
+          <div id="smokeEffect" class="hidden absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none z-30">
+            <div class="w-3 h-10 bg-slate-300/60 rounded-full blur-md animate-ping"></div>
+          </div>
+
+          <svg class="w-64 h-64 sm:w-80 sm:h-80 drop-shadow-2xl" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="150" cy="260" rx="120" ry="20" fill="#FCE7F3" stroke="#F472B6" stroke-width="4"/>
+            <ellipse cx="150" cy="256" rx="100" ry="14" fill="#FFFFFF"/>
+
+            <path d="M60 180 C60 180, 60 230, 60 235 C60 252, 240 252, 240 235 C240 230, 240 180, 240 180 Z" fill="#F43F5E"/>
+            <path d="M60 180 C80 195, 100 170, 120 185 C140 200, 160 170, 180 188 C200 205, 220 175, 240 180 L240 160 C220 155, 200 170, 180 155 C160 140, 140 165, 120 152 C100 140, 80 155, 60 160 Z" fill="#FFF1F2"/>
+
+            <path d="M85 125 C85 125, 85 160, 85 165 C85 180, 215 180, 215 165 C215 160, 215 125, 215 125 Z" fill="#FB7185"/>
+            <path d="M85 125 C100 138, 115 118, 130 132 C145 142, 160 120, 175 132 C190 142, 205 122, 215 125 L215 110 C205 108, 190 118, 175 110 C160 100, 145 115, 130 108 C115 100, 100 110, 85 110 Z" fill="#FFFFFF"/>
+
+            <circle cx="105" cy="108" r="8" fill="#E11D48"/>
+            <circle cx="150" cy="104" r="9" fill="#E11D48"/>
+            <circle cx="195" cy="108" r="8" fill="#E11D48"/>
+
+            <!-- Candle 1 -->
+            <rect x="115" y="60" width="8" height="42" rx="3" fill="#FBBF24"/>
+            <line x1="119" y1="60" x2="119" y2="52" stroke="#475569" stroke-width="2"/>
+            <g id="flame1" class="candle-flame">
+              <path d="M119 32 C115 42, 112 45, 119 52 C126 45, 123 42, 119 32 Z" fill="#F59E0B"/>
+              <ellipse cx="119" cy="46" rx="2.5" ry="4.5" fill="#FEF08A"/>
+            </g>
+
+            <!-- Candle 2 -->
+            <rect x="146" y="50" width="8" height="52" rx="3" fill="#60A5FA"/>
+            <line x1="150" y1="50" x2="150" y2="42" stroke="#475569" stroke-width="2"/>
+            <g id="flame2" class="candle-flame">
+              <path d="M150 22 C146 32, 143 35, 150 42 C157 35, 154 32, 150 22 Z" fill="#F59E0B"/>
+              <ellipse cx="150" cy="36" rx="2.5" ry="4.5" fill="#FEF08A"/>
+            </g>
+
+            <!-- Candle 3 -->
+            <rect x="177" y="60" width="8" height="42" rx="3" fill="#34D399"/>
+            <line x1="181" y1="60" x2="181" y2="52" stroke="#475569" stroke-width="2"/>
+            <g id="flame3" class="candle-flame">
+              <path d="M181 32 C177 42, 174 45, 181 52 C188 45, 185 42, 181 32 Z" fill="#F59E0B"/>
+              <ellipse cx="181" cy="46" rx="2.5" ry="4.5" fill="#FEF08A"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Blow Candle Action Button -->
+        <button id="blowCandleBtn" class="mt-4 px-7 py-3 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-medium rounded-full shadow-md shadow-rose-200 hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 text-base">
+          <i data-lucide="wind" class="w-5 h-5"></i>
+          <span>กดตรงนี้เพื่อเป่าเทียนเลย 💨</span>
+        </button>
+      </div>
+
+      <!-- UNLOCKED WISHES & LETTERS -->
+      <div id="wishesRevealedSection" class="hidden space-y-12 transition-all duration-700 pt-6">
+        
+        <!-- Wax Sealed Envelope -->
+        <div class="max-w-xl mx-auto">
+          <div id="envelopeTrigger" class="group cursor-pointer bg-white p-6 sm:p-8 rounded-3xl border-2 border-dashed border-rose-300 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-b from-white to-rose-50/40">
+            <div class="w-16 h-16 mx-auto mb-4 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 shadow-inner group-hover:scale-110 transition-transform">
+              <i data-lucide="mail" class="w-8 h-8"></i>
+            </div>
+            <h3 class="font-serif text-xl sm:text-2xl font-bold text-slate-800">
+              จดหมายจากหัวใจถึงเธอ
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              คลิกเพื่อเปิดอ่านข้อความวันเกิดสุดพิเศษ 💌
+            </p>
+          </div>
+        </div>
+
+        <!-- Opened Letter Card -->
+        <div id="letterPaper" class="hidden max-w-xl mx-auto bg-[#FFFDF9] border border-amber-200/80 p-6 sm:p-10 rounded-3xl shadow-2xl relative text-left transition-all">
+          <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-rose-500 text-white px-4 py-1 rounded-full text-xs font-serif tracking-wider shadow">
+            Special Birthday Letter
+          </div>
+
+          <div class="font-hand text-slate-700 leading-relaxed text-base sm:text-lg space-y-4 pt-4">
+            <p class="text-xl font-bold text-rose-600" id="letterRecipient">ถึง ที่รักของเค้า,</p>
+            <div id="letterContentBody" class="whitespace-pre-line leading-relaxed">
+              สุขสันต์วันเกิดนะ! ขอให้ปีนี้เป็นปีที่ใจดีกับเธอ มีรอยยิ้มเยอะๆ สุขภาพแข็งแรง ไม่ปวดหลังเวลาทำงานนะ
+              
+              ขอบคุณที่คอยอยู่ข้างๆ กัน คอยหัวเราะด้วยกัน และเป็นความสบายใจให้เค้าเสมอ ไม่ว่าจะเจอวันที่เหนื่อยแค่ไหน แค่ได้คุยกับเธอก็หายเหนื่อยแล้ว
+              
+              สัญญาว่าจะอยู่ฉลองวันเกิดให้เธอแบบนี้ไปอีกหลายๆ ปีเลย รักเธอที่สุดในโลกเลยนะ ❤️
+            </div>
+            <div class="text-right pt-4">
+              <span class="block text-sm text-slate-400 font-sans">ด้วยรักและเสมอมา,</span>
+              <span id="letterSender" class="font-serif font-bold text-lg text-rose-600">คนโปรดของเธอ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Gift Box Voucher -->
+        <div class="max-w-md mx-auto pt-4">
+          <div class="bg-white/90 backdrop-blur-sm p-6 rounded-3xl border border-rose-200 shadow-xl space-y-4">
+            <span class="text-xs uppercase font-bold tracking-wider text-rose-500">Birthday Mystery Gift</span>
+            <h4 class="font-serif text-xl font-bold text-slate-800">กล่องของขวัญตามใจแฟน</h4>
+            
+            <div id="giftBoxContainer" class="py-4 flex flex-col items-center justify-center cursor-pointer">
+              <div id="giftBoxIcon" class="w-24 h-24 bg-gradient-to-tr from-rose-500 to-pink-400 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-rose-200 animate-wiggle hover:scale-110 transition-transform">
+                <i data-lucide="gift" class="w-12 h-12"></i>
+              </div>
+              <p id="giftHint" class="text-xs text-rose-500 font-medium mt-3 animate-pulse">
+                แตะที่กล่องเพื่อแกะของขวัญ! 🎁
+              </p>
+            </div>
+
+            <!-- Revealed Coupon Ticket -->
+            <div id="revealedCoupon" class="hidden bg-gradient-to-r from-amber-50 to-rose-50 border-2 border-dashed border-rose-300 rounded-2xl p-5 text-center relative overflow-hidden transition-all duration-500">
+              <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border-r border-rose-300"></div>
+              <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border-l border-rose-300"></div>
+              
+              <span class="text-[10px] font-bold uppercase tracking-widest text-amber-700 bg-amber-200/80 px-2 py-0.5 rounded-full">
+                Voucher Pass
+              </span>
+              <h5 id="couponTitle" class="font-serif text-lg font-bold text-slate-800 mt-2">
+                "สิทธิ์สั่งอะไรก็ได้ 1 วันเต็ม + ดินเนอร์มื้อโปรด"
+              </h5>
+              <p id="couponDesc" class="text-xs text-slate-600 mt-1">
+                ไม่ว่าจะอยากกินโอมากาเสะ ชาบู หรือให้ตามใจทั้งวัน คูปองนี้ใช้ได้ไม่มีวันหมดอายุ!
+              </p>
+              <div class="mt-4 pt-3 border-t border-rose-200/60 flex items-center justify-between text-xs text-slate-400">
+                <span>Code: HBD-BABY-FOREVER</span>
+                <span class="text-rose-600 font-semibold">Valid: ตลอดไป ❤️</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MODAL 1: Quick Edit Single Card -->
+  <div id="cardEditModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 sm:p-7 space-y-4 my-8 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-serif text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i data-lucide="image" class="w-5 h-5 text-rose-500"></i>
+          <span>แก้ไขการ์ดความทรงจำ</span>
+        </h3>
+        <button id="closeCardModal" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="editCardId" />
+
+      <!-- Photo Preview & Upload Section -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">รูปถ่ายความทรงจำ (Polaroid Photo)</label>
+        <div class="flex items-center gap-4">
+          <div class="w-24 h-24 rounded-2xl overflow-hidden bg-rose-50 border border-rose-200 flex-shrink-0 shadow-inner">
+            <img id="cardModalPreviewImg" src="" class="w-full h-full object-cover" alt="Preview" />
+          </div>
+          <div class="space-y-2 flex-grow">
+            <label class="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-medium transition-all">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span>อัปโหลดรูปจากเครื่องคุณ</span>
+              <input type="file" id="cardModalFileInput" accept="image/*" class="hidden" />
+            </label>
+            <div class="text-[11px] text-slate-400">หรือวาง Image URL ด้านล่าง:</div>
+            <input type="url" id="cardModalImageUrl" placeholder="https://..." class="w-full text-xs px-3 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-400" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Title & Tag -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">หัวข้อความทรงจำ</label>
+          <input id="cardModalTitle" type="text" placeholder="เช่น เดตแรกของเรา" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">วันที่หรือสถานที่</label>
+          <input id="cardModalDate" type="text" placeholder="เช่น 14 ก.พ. 2024" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">คำบรรยายสั้นๆ หน้าการ์ด</label>
+        <input id="cardModalFrontNote" type="text" placeholder="เช่น จำร้านกาแฟร้านโปรดนี้ได้มั้ย..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300" />
+      </div>
+
+      <!-- Secret Back Note (Highlight Feature) -->
+      <div class="bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200/80 space-y-1.5">
+        <label class="block text-xs font-semibold text-rose-700 flex items-center gap-1.5">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+          <span>ข้อความลับหลังรูป (Secret Note เมื่อกดพลิกการ์ด)</span>
+        </label>
+        <textarea id="cardModalBackNote" rows="3" placeholder="เขียนความในใจที่อยากบอกเธอตอนเธอคลิกพลิกการ์ด..." class="w-full px-3 py-2 text-sm rounded-xl border border-rose-200 bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 font-hand"></textarea>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+        <button id="deleteCurrentCardBtn" class="text-rose-500 hover:text-rose-700 text-xs flex items-center gap-1">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>ลบการ์ดนี้</span>
+        </button>
+        <div class="flex gap-2">
+          <button id="cancelCardModalBtn" class="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-medium">
+            ยกเลิก
+          </button>
+          <button id="saveCardModalBtn" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium shadow-md">
+            บันทึกการ์ดนี้
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Full Website Settings & Letter Customizer -->
+  <div id="customModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div>
+          <h3 class="font-serif text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="sliders-horizontal" class="w-5 h-5 text-rose-500"></i>
+            ตั้งค่าเรื่องราว & ของขวัญ
+          </h3>
+          <p class="text-xs text-slate-400">ปรับแต่งข้อความทั้งหมดสำหรับแฟนของคุณ</p>
+        </div>
+        <button id="closeCustomizeModal" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Settings Tabs -->
+      <div class="flex border-b border-slate-200 gap-4 text-xs font-semibold">
+        <button id="tabBtnGeneral" class="tab-btn pb-2 text-rose-600 border-b-2 border-rose-500">
+          ข้อมูลทั่วไป & วันที่
+        </button>
+        <button id="tabBtnLetter" class="tab-btn pb-2 text-slate-400 hover:text-slate-600">
+          จดหมายรัก & คูปอง
+        </button>
+      </div>
+
+      <!-- TAB 1: General Info -->
+      <div id="tabContentGeneral" class="space-y-4 text-sm">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">ชื่อแฟน (Partner's Name)</label>
+          <input id="inputPartnerName" type="text" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-400" />
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">ข้อความเกริ่นใต้ชื่อแฟน (Hero Subtitle)</label>
+          <input id="inputHeroSubtitle" type="text" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-400" />
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">วันแรกที่เริ่มคบหรือเจอกัน (สำหรับนับวัน)</label>
+          <input id="inputStartDate" type="datetime-local" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-400" />
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">ชื่อคุณ (ผู้ส่งของขวัญ)</label>
+          <input id="inputSenderName" type="text" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-400" />
+        </div>
+      </div>
+
+      <!-- TAB 2: Love Letter & Gift Voucher -->
+      <div id="tabContentLetter" class="space-y-4 text-sm hidden">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">เนื้อหาในจดหมายวันเกิด (Birthday Love Letter)</label>
+          <textarea id="inputLetterContent" rows="5" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-400 font-hand"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">ชื่อสิทธิ์ในกล่องของขวัญ (Mystery Voucher Title)</label>
+          <input id="inputCouponTitle" type="text" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-400" />
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">คำอธิบายของคูปอง (Voucher Details)</label>
+          <input id="inputCouponDesc" type="text" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-400" />
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex justify-between items-center pt-3 border-t">
+        <button id="resetDefaultsBtn" class="text-xs text-slate-400 hover:text-rose-600 underline">
+          คืนค่าเริ่มต้นตัวอย่าง
+        </button>
+        <div class="flex gap-2">
+          <button id="cancelModalBtn" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs">
+            ยกเลิก
+          </button>
+          <button id="saveModalBtn" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs shadow-md">
+            บันทึกการเปลี่ยนแปลง
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="py-8 text-center text-xs text-slate-400 border-t border-rose-100 bg-[#FFF9FA]">
+    <p>Crafted with endless love for your special day ❤️</p>
+    <p class="mt-1">Happy Birthday!</p>
+  </footer>
+
+  <script>
+    // --- Default Sample Data ---
+    const initialDefaultData = {
+      partnerName: "หมูอ้วน",
+      senderName: "แฟนของเธอเอง",
+      heroSubtitle: "ยินดีต้อนรับสู่บันทึกความทรงจำของเรา ขอบคุณที่เกิดมาเป็นรอยยิ้มและความสุขในทุกๆ วันนะ",
+      startDate: "2023-01-14T19:00",
+      couponTitle: "สิทธิ์สั่งอะไรก็ได้ 1 วันเต็ม + ดินเนอร์มื้อโปรด",
+      couponDesc: "ไม่ว่าจะอยากกินโอมากาเสะ ชาบู หรือให้ตามใจทั้งวัน คูปองนี้ใช้ได้ไม่มีวันหมดอายุ!",
+      letterContent: `สุขสันต์วันเกิดนะ! ขอให้ปีนี้เป็นปีที่ใจดีกับเธอ มีรอยยิ้มเยอะๆ สุขภาพแข็งแรง ไม่ปวดหลังเวลาทำงานนะ\n\nขอบคุณที่คอยอยู่ข้างๆ กัน คอยหัวเราะด้วยกัน และเป็นความสบายใจให้เค้าเสมอ ไม่ว่าจะเจอวันที่เหนื่อยแค่ไหน แค่ได้คุยกับเธอก็หายเหนื่อยแล้ว\n\nสัญญาว่าจะอยู่ฉลองวันเกิดให้เธอแบบนี้ไปอีกหลายๆ ปีเลย รักเธอที่สุดในโลกเลยนะ ❤️`,
+      milestones: [
+        {
+          id: 1,
+          date: "14 มกราคม 2023",
+          title: "วันแรกที่เราได้เจอกัน",
+          tagline: "The Day It All Started",
+          image: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
+          frontNote: "จำร้านกาแฟเล็กๆ วันนั้นได้ไหม? เธอใส่เสื้อสีครีมแล้วยิ้มเขินๆ ให้เค้า",
+          backNote: "วันนั้นตื่นเต้นมาก หัวใจเต้นแรงจนกลัวเธอจะได้ยิน ไม่คิดเลยว่าจากคนแปลกหน้าวันนั้น จะกลายมาเป็นคนสำคัญที่สุดในชีวิตวันนี้ ❤️",
+          likes: 24
+        },
+        {
+          id: 2,
+          date: "18 พฤษภาคม 2023",
+          title: "เดตแรกและเสียงหัวเราะที่ไม่หยุด",
+          tagline: "First Date & The Spill",
+          image: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=800&q=80",
+          frontNote: "มื้อเย็นที่เราทำน้ำส้มหกเลอะโต๊ะ แต่กลับกลายเป็นเรื่องขำที่สุด",
+          backNote: "ตอนเธอหัวเราะตาหยีคือโมเมนต์ที่เค้าคิดในใจเลยว่า 'คนนี้น่ารักจัง อยากเห็นรอยยิ้มแบบนี้ไปทุกวันเลย'",
+          likes: 42
+        },
+        {
+          id: 3,
+          date: "12 ธันวาคม 2023",
+          title: "ทริปรับลมหนาวครั้งแรกของเรา",
+          tagline: "First Road Trip Together",
+          image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80",
+          frontNote: "นั่งร้องเพลงบนรถตลอด 5 ชั่วโมง แวะกินของข้างทางจนพุงกาง",
+          backNote: "การเดินทางที่มีเธอนั่งข้างๆ ทำให้ระยะทางไกลแค่ไหนก็ไม่เหนื่อยเลย ขอบคุณที่คอยเป็น DJ และเป็นตู้เพลงให้เค้านะ 🎶",
+          likes: 88
+        },
+        {
+          id: 4,
+          date: "ตลอดเวลาที่ผ่านมา",
+          title: "ผ่านวันที่ยากไปด้วยกัน",
+          tagline: "Through Thick and Thin",
+          image: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=800&q=80",
+          frontNote: "วันที่เหนื่อยจากการทำงาน แค่ได้กอดเธอก็หายเหนื่อยแล้ว",
+          backNote: "ขอบคุณที่คอยรับฟัง คอยเป็นเซฟโซนที่อบอุ่นที่สุดในวันที่โลกภายนอกใจร้ายนะ รักเธอมากๆ เลย",
+          likes: 105
+        },
+        {
+          id: 5,
+          date: "วันนี้ & ทุกๆ วันต่อไป",
+          title: "สุขสันต์วันเกิดนะคนเก่ง",
+          tagline: "Celebrating You Always",
+          image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=800&q=80",
+          frontNote: "ขอให้ปีนี้ของเธอเต็มไปด้วยความสุข ความสดใส และมีเค้าอยู่ข้างๆ",
+          backNote: "ของขวัญที่ดีที่สุดสำหรับเค้า คือการได้เห็นเธอมีความสุขในทุกวัน โตไปด้วยกันเรื่อยๆ นะครับ 🎂💖",
+          likes: 999
+        }
+      ]
+    };
+
+    // Load from LocalStorage
+    let appData = JSON.parse(localStorage.getItem('bday_app_data_v2')) || initialDefaultData;
+    let isViewOnlyMode = false;
+
+    function saveAppData() {
+      try {
+        localStorage.setItem('bday_app_data_v2', JSON.stringify(appData));
+      } catch (err) {
+        console.warn("Storage quota warning:", err);
+      }
+    }
+
+    // Helper: Compress user uploaded image on client side before storage
+    function compressImageFile(file, maxWidth = 800, quality = 0.7) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+        };
+      });
+    }
+
+    // --- STREAMING_CHUNK:Rendering Timeline Cards with In-Place Edit Controls... ---
+    function renderTimeline() {
+      const container = document.getElementById('timelineList');
+      container.innerHTML = '';
+
+      appData.milestones.forEach((item, index) => {
+        const isEven = index % 2 === 0;
+        
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = `relative flex flex-col sm:flex-row items-center ${isEven ? 'sm:flex-row-reverse' : ''}`;
+
+        cardWrapper.innerHTML = `
+          <!-- Center Pin -->
+          <div class="absolute left-4 sm:left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-white border-4 border-rose-400 flex items-center justify-center text-rose-500 shadow-md z-20">
+            <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="w-full sm:w-1/2 pl-12 sm:pl-0 ${isEven ? 'sm:pl-10' : 'sm:pr-10'}">
+            <div class="perspective-1000 w-full max-w-sm mx-auto relative group/card">
+              
+              <!-- Quick Edit Button directly on Polaroid -->
+              <button 
+                class="edit-control edit-single-card-btn absolute -top-3 -right-2 z-30 bg-white/95 text-rose-600 hover:bg-rose-500 hover:text-white p-2 rounded-full shadow-lg border border-rose-200 transition-all hover:scale-110 active:scale-95" 
+                data-id="${item.id}"
+                title="แก้ไขการ์ดนี้"
+              >
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+              </button>
+
+              <div id="card-${item.id}" class="card-flipper relative w-full transition-transform duration-700 transform-style-preserve-3d cursor-pointer">
+                
+                <!-- FRONT OF POLAROID -->
+                <div class="bg-white p-4 pb-5 rounded-2xl shadow-xl shadow-rose-100 border border-rose-100/60 backface-hidden relative group">
+                  <!-- Washi Tape -->
+                  <div class="washi-tape absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-6 transform -rotate-2 rounded-sm pointer-events-none z-10"></div>
+
+                  <div class="relative overflow-hidden rounded-xl aspect-[4/3] bg-rose-50 mb-3.5">
+                    <img 
+                      src="${item.image}" 
+                      alt="${item.title}" 
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[11px] px-2.5 py-0.5 rounded-full font-sans font-light">
+                      ${item.date}
+                    </span>
+                  </div>
+
+                  <div class="text-left px-1 space-y-1.5">
+                    <span class="text-[11px] font-semibold text-rose-500 uppercase tracking-wide">${item.tagline}</span>
+                    <h3 class="font-serif text-lg font-bold text-slate-800 leading-snug">${item.title}</h3>
+                    <p class="text-xs text-slate-600 font-sans leading-relaxed line-clamp-2">${item.frontNote}</p>
+                  </div>
+
+                  <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                    <span class="text-[11px] text-rose-400 flex items-center gap-1 font-medium">
+                      <span>แตะเพื่อพลิกอ่าน</span> ↻
+                    </span>
+                    <button class="like-btn flex items-center gap-1 text-rose-500 hover:text-rose-600 p-1 active:scale-125 transition-transform" data-id="${item.id}">
+                      <i data-lucide="heart" class="w-4 h-4 fill-rose-500"></i>
+                      <span class="like-count font-semibold">${item.likes}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- BACK OF POLAROID (Secret Message) -->
+                <div class="absolute inset-0 bg-gradient-to-br from-[#FFFDF9] to-rose-50/70 p-6 rounded-2xl shadow-xl border border-rose-200/70 backface-hidden rotate-y-180 flex flex-col justify-between text-left">
+                  <!-- Tape on back -->
+                  <div class="washi-tape absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-6 transform rotate-1 rounded-sm pointer-events-none z-10"></div>
+                  
+                  <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between text-rose-500 text-xs font-semibold">
+                      <div class="flex items-center gap-1.5">
+                        <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                        <span>Secret Memory Note</span>
+                      </div>
+                    </div>
+                    <h4 class="font-serif font-bold text-base text-slate-800">${item.title}</h4>
+                    <p class="font-hand text-slate-700 text-sm sm:text-base leading-relaxed whitespace-pre-line">
+                      "${item.backNote}"
+                    </p>
+                  </div>
+
+                  <div class="text-right text-[11px] text-rose-400 font-medium">
+                    <span>แตะเพื่อพลิกกลับ</span> ↻
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(cardWrapper);
+      });
+
+      lucide.createIcons();
+
+      // Card Flip
+      document.querySelectorAll('.card-flipper').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.like-btn') || e.target.closest('.edit-control')) return;
+          card.classList.toggle('rotate-y-180');
+        });
+      });
+
+      // Like Reactions
+      document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const countSpan = btn.querySelector('.like-count');
+          let count = parseInt(countSpan.textContent) || 0;
+          countSpan.textContent = count + 1;
+          const id = parseInt(btn.dataset.id);
+          const target = appData.milestones.find(m => m.id === id);
+          if (target) {
+            target.likes = count + 1;
+            saveAppData();
+          }
+          createHeartBurst(e.clientX, e.clientY);
+        });
+      });
+
+      // Edit Card Buttons
+      document.querySelectorAll('.edit-single-card-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const cardId = parseInt(btn.dataset.id);
+          openEditCardModal(cardId);
+        });
+      });
+    }
+
+    // --- STREAMING_CHUNK:Card Editor Modal Logic (Image Upload & Back Note)... ---
+    const cardEditModal = document.getElementById('cardEditModal');
+    const closeCardModal = document.getElementById('closeCardModal');
+    const cancelCardModalBtn = document.getElementById('cancelCardModalBtn');
+    const saveCardModalBtn = document.getElementById('saveCardModalBtn');
+    const deleteCurrentCardBtn = document.getElementById('deleteCurrentCardBtn');
+    const cardModalFileInput = document.getElementById('cardModalFileInput');
+    const cardModalPreviewImg = document.getElementById('cardModalPreviewImg');
+    const cardModalImageUrl = document.getElementById('cardModalImageUrl');
+
+    function openEditCardModal(cardId) {
+      const card = appData.milestones.find(m => m.id === cardId);
+      if (!card) return;
+
+      document.getElementById('editCardId').value = card.id;
+      document.getElementById('cardModalTitle').value = card.title;
+      document.getElementById('cardModalDate').value = card.date;
+      document.getElementById('cardModalFrontNote').value = card.frontNote;
+      document.getElementById('cardModalBackNote').value = card.backNote;
+      cardModalImageUrl.value = card.image.startsWith('data:') ? '' : card.image;
+      cardModalPreviewImg.src = card.image;
+
+      deleteCurrentCardBtn.style.display = appData.milestones.length > 1 ? 'flex' : 'none';
+      cardEditModal.classList.remove('hidden');
+    }
+
+    // Handle local photo upload
+    cardModalFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const compressedBase64 = await compressImageFile(file, 800, 0.75);
+        cardModalPreviewImg.src = compressedBase64;
+        cardModalImageUrl.value = '';
+      }
+    });
+
+    // Handle URL typing
+    cardModalImageUrl.addEventListener('input', (e) => {
+      if (e.target.value.trim()) {
+        cardModalPreviewImg.src = e.target.value.trim();
+      }
+    });
+
+    closeCardModal.addEventListener('click', () => cardEditModal.classList.add('hidden'));
+    cancelCardModalBtn.addEventListener('click', () => cardEditModal.classList.add('hidden'));
+
+    saveCardModalBtn.addEventListener('click', () => {
+      const cardId = parseInt(document.getElementById('editCardId').value);
+      const card = appData.milestones.find(m => m.id === cardId);
+      if (!card) return;
+
+      card.title = document.getElementById('cardModalTitle').value.trim() || card.title;
+      card.date = document.getElementById('cardModalDate').value.trim() || card.date;
+      card.frontNote = document.getElementById('cardModalFrontNote').value.trim() || card.frontNote;
+      card.backNote = document.getElementById('cardModalBackNote').value.trim() || card.backNote;
+      
+      const newImg = cardModalPreviewImg.src;
+      if (newImg && newImg !== window.location.href) {
+        card.image = newImg;
+      }
+
+      saveAppData();
+      renderTimeline();
+      cardEditModal.classList.add('hidden');
+      launchRomanticConfetti();
+    });
+
+    deleteCurrentCardBtn.addEventListener('click', () => {
+      const cardId = parseInt(document.getElementById('editCardId').value);
+      appData.milestones = appData.milestones.filter(m => m.id !== cardId);
+      saveAppData();
+      renderTimeline();
+      cardEditModal.classList.add('hidden');
+    });
+
+    // Add New Memory Card
+    document.getElementById('addNewCardBtn').addEventListener('click', () => {
+      const newId = Date.now();
+      const newCard = {
+        id: newId,
+        date: "วันนี้",
+        title: "ความทรงจำใหม่ของเรา",
+        tagline: "New Memory",
+        image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80",
+        frontNote: "แตะเพื่อแก้ไขคำบรรยายตรงนี้ได้เลย",
+        backNote: "เขียนความในใจที่อยากบอกแฟนไว้ตรงนี้...",
+        likes: 1
+      };
+      appData.milestones.push(newCard);
+      saveAppData();
+      renderTimeline();
+      openEditCardModal(newId);
+    });
+
+    // --- STREAMING_CHUNK:Preview Mode & Edit Mode Switcher... ---
+    const modeToggleBtn = document.getElementById('modeToggleBtn');
+    const modeIcon = document.getElementById('modeIcon');
+    const modeText = document.getElementById('modeText');
+
+    modeToggleBtn.addEventListener('click', () => {
+      isViewOnlyMode = !isViewOnlyMode;
+      if (isViewOnlyMode) {
+        document.body.classList.add('view-mode');
+        modeText.textContent = "Exit Preview";
+        modeIcon.setAttribute('data-lucide', 'edit-2');
+      } else {
+        document.body.classList.remove('view-mode');
+        modeText.textContent = "Preview";
+        modeIcon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    });
+
+    // --- STREAMING_CHUNK:Floating Hearts & Love Counter... ---
+    function createHeartBurst(x, y) {
+      const heartIcons = ['❤️', '💖', '✨', '🌸', '💕'];
+      for (let i = 0; i < 6; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'floating-heart';
+        heart.textContent = heartIcons[Math.floor(Math.random() * heartIcons.length)];
+        heart.style.left = `${x}px`;
+        heart.style.top = `${y}px`;
+        const randomX = (Math.random() - 0.5) * 120;
+        heart.style.setProperty('--tw-tx', `${randomX}px`);
+        document.body.appendChild(heart);
+
+        setTimeout(() => heart.remove(), 2800);
+      }
+    }
+
+    window.addEventListener('click', (e) => {
+      if (Math.random() > 0.45 && !e.target.closest('button') && !e.target.closest('input')) {
+        createHeartBurst(e.clientX, e.clientY);
+      }
+    });
+
+    function updateLoveCounter() {
+      const start = new Date(appData.startDate).getTime();
+      const now = new Date().getTime();
+      const diff = Math.max(0, now - start);
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      document.getElementById('cntDays').textContent = String(days).padStart(2, '0');
+      document.getElementById('cntHours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('cntMins').textContent = String(mins).padStart(2, '0');
+      document.getElementById('cntSecs').textContent = String(secs).padStart(2, '0');
+    }
+    setInterval(updateLoveCounter, 1000);
+
+    // --- STREAMING_CHUNK:Birthday Cake Blowing & Confetti... ---
+    let candlesBlown = false;
+
+    function blowOutCandles() {
+      if (candlesBlown) return;
+      candlesBlown = true;
+
+      document.getElementById('flame1').style.display = 'none';
+      document.getElementById('flame2').style.display = 'none';
+      document.getElementById('flame3').style.display = 'none';
+
+      const smoke = document.getElementById('smokeEffect');
+      smoke.classList.remove('hidden');
+      setTimeout(() => smoke.classList.add('hidden'), 2500);
+
+      playChimeTune();
+      launchRomanticConfetti();
+
+      const blowBtn = document.getElementById('blowCandleBtn');
+      blowBtn.innerHTML = `<span>✨ คำอธิษฐานส่งไปถึงดวงดาวแล้ว! ✨</span>`;
+      blowBtn.classList.replace('from-rose-500', 'from-emerald-500');
+      blowBtn.classList.replace('to-rose-600', 'to-teal-600');
+
+      const revealedSection = document.getElementById('wishesRevealedSection');
+      revealedSection.classList.remove('hidden');
+      revealedSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    document.getElementById('blowCandleBtn').addEventListener('click', blowOutCandles);
+    document.getElementById('cakeWrapper').addEventListener('click', blowOutCandles);
+
+    function launchRomanticConfetti() {
+      const count = 180;
+      const defaults = { origin: { y: 0.7 } };
+
+      function fire(ratio, opts) {
+        confetti(Object.assign({}, defaults, opts, {
+          particleCount: Math.floor(count * ratio),
+          colors: ['#F43F5E', '#FB7185', '#FDA4AF', '#FBBF24', '#FFFFFF', '#EC4899']
+        }));
+      }
+
+      fire(0.25, { spread: 26, startVelocity: 55 });
+      fire(0.2, { spread: 60 });
+      fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+      fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+      fire(0.1, { spread: 120, startVelocity: 45 });
+    }
+
+    // Letter Envelope interaction
+    document.getElementById('envelopeTrigger').addEventListener('click', () => {
+      document.getElementById('envelopeTrigger').classList.add('hidden');
+      const letterPaper = document.getElementById('letterPaper');
+      letterPaper.classList.remove('hidden');
+      letterPaper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      launchRomanticConfetti();
+    });
+
+    // Mystery Box interaction
+    document.getElementById('giftBoxContainer').addEventListener('click', () => {
+      const giftIcon = document.getElementById('giftBoxIcon');
+      const giftHint = document.getElementById('giftHint');
+      const coupon = document.getElementById('revealedCoupon');
+
+      giftIcon.classList.add('scale-125', 'rotate-12');
+      setTimeout(() => {
+        giftIcon.classList.add('hidden');
+        giftHint.classList.add('hidden');
+        coupon.classList.remove('hidden');
+        launchRomanticConfetti();
+      }, 400);
+    });
+
+    // --- STREAMING_CHUNK:Synthesizer Music (Web Audio API)... ---
+    let audioCtx = null;
+    let isPlayingMusic = false;
+    let musicInterval = null;
+    const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+
+    function playSoftTone(freq, duration = 1.6) {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.05, audioCtx.currentTime + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.error("Audio tone error", e);
+      }
+    }
+
+    function playChimeTune() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const fanfare = [523.25, 659.25, 783.99, 1046.50];
+      fanfare.forEach((f, i) => {
+        setTimeout(() => playSoftTone(f, 2.0), i * 180);
+      });
+    }
+
+    function startMusicLoop() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      musicInterval = setInterval(() => {
+        const note = notes[Math.floor(Math.random() * notes.length)];
+        playSoftTone(note, 2.2);
+      }, 1200);
+    }
+
+    function stopMusicLoop() {
+      if (musicInterval) clearInterval(musicInterval);
+    }
+
+    const musicToggleBtn = document.getElementById('musicToggle');
+    const musicIconContainer = document.getElementById('musicIconContainer');
+    const musicStatusText = document.getElementById('musicStatusText');
+
+    musicToggleBtn.addEventListener('click', () => {
+      isPlayingMusic = !isPlayingMusic;
+      if (isPlayingMusic) {
+        startMusicLoop();
+        musicIconContainer.innerHTML = '<i data-lucide="music" class="w-4 h-4 text-rose-500 animate-bounce"></i>';
+        musicStatusText.textContent = "Melody On";
+      } else {
+        stopMusicLoop();
+        musicIconContainer.innerHTML = '<i data-lucide="volume-x" class="w-4 h-4"></i>';
+        musicStatusText.textContent = "Play Melody";
+      }
+      lucide.createIcons();
+    });
+
+    // --- STREAMING_CHUNK:Main Website Settings Dialog... ---
+    const customModal = document.getElementById('customModal');
+    const openModalBtn = document.getElementById('openCustomizeModal');
+    const closeModalBtn = document.getElementById('closeCustomizeModal');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const saveModalBtn = document.getElementById('saveModalBtn');
+    const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
+
+    // Tabs switching
+    const tabBtnGeneral = document.getElementById('tabBtnGeneral');
+    const tabBtnLetter = document.getElementById('tabBtnLetter');
+    const tabContentGeneral = document.getElementById('tabContentGeneral');
+    const tabContentLetter = document.getElementById('tabContentLetter');
+
+    tabBtnGeneral.addEventListener('click', () => {
+      tabBtnGeneral.className = 'tab-btn pb-2 text-rose-600 border-b-2 border-rose-500';
+      tabBtnLetter.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600';
+      tabContentGeneral.classList.remove('hidden');
+      tabContentLetter.classList.add('hidden');
+    });
+
+    tabBtnLetter.addEventListener('click', () => {
+      tabBtnLetter.className = 'tab-btn pb-2 text-rose-600 border-b-2 border-rose-500';
+      tabBtnGeneral.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600';
+      tabContentLetter.classList.remove('hidden');
+      tabContentGeneral.classList.add('hidden');
+    });
+
+    function applyDataToDOM() {
+      document.getElementById('heroPartnerName').textContent = appData.partnerName;
+      document.getElementById('heroSubtitle').textContent = appData.heroSubtitle;
+      document.getElementById('letterRecipient').textContent = `ถึง ${appData.partnerName} ที่รักของเค้า,`;
+      document.getElementById('letterSender').textContent = appData.senderName;
+      document.getElementById('letterContentBody').textContent = appData.letterContent;
+      document.getElementById('couponTitle').textContent = `"${appData.couponTitle}"`;
+      document.getElementById('couponDesc').textContent = appData.couponDesc;
+    }
+
+    openModalBtn.addEventListener('click', () => {
+      document.getElementById('inputPartnerName').value = appData.partnerName;
+      document.getElementById('inputHeroSubtitle').value = appData.heroSubtitle;
+      document.getElementById('inputStartDate').value = appData.startDate;
+      document.getElementById('inputSenderName').value = appData.senderName;
+      document.getElementById('inputLetterContent').value = appData.letterContent;
+      document.getElementById('inputCouponTitle').value = appData.couponTitle;
+      document.getElementById('inputCouponDesc').value = appData.couponDesc;
+      customModal.classList.remove('hidden');
+    });
+
+    function closeModal() {
+      customModal.classList.add('hidden');
+    }
+
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelModalBtn.addEventListener('click', closeModal);
+
+    saveModalBtn.addEventListener('click', () => {
+      appData.partnerName = document.getElementById('inputPartnerName').value.trim() || appData.partnerName;
+      appData.heroSubtitle = document.getElementById('inputHeroSubtitle').value.trim() || appData.heroSubtitle;
+      appData.startDate = document.getElementById('inputStartDate').value || appData.startDate;
+      appData.senderName = document.getElementById('inputSenderName').value.trim() || appData.senderName;
+      appData.letterContent = document.getElementById('inputLetterContent').value.trim() || appData.letterContent;
+      appData.couponTitle = document.getElementById('inputCouponTitle').value.trim() || appData.couponTitle;
+      appData.couponDesc = document.getElementById('inputCouponDesc').value.trim() || appData.couponDesc;
+
+      saveAppData();
+      applyDataToDOM();
+      updateLoveCounter();
+      closeModal();
+      launchRomanticConfetti();
+    });
+
+    resetDefaultsBtn.addEventListener('click', () => {
+      if (confirm('ต้องการรีเซ็ตข้อความและรูปภาพทั้งหมดกลับเป็นค่าเริ่มต้นหรือไม่?')) {
+        appData = JSON.parse(JSON.stringify(initialDefaultData));
+        saveAppData();
+        renderTimeline();
+        applyDataToDOM();
+        updateLoveCounter();
+        closeModal();
+      }
+    });
+
+    // --- STREAMING_CHUNK:Initializing Application... ---
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTimeline();
+      applyDataToDOM();
+      updateLoveCounter();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
