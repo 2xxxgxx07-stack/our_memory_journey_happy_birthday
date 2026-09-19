@@ -19,6 +19,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
   <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
     tailwind.config = {
@@ -765,9 +768,53 @@
     }
     checkUrlPayload();
 
+    // --- STREAMING_CHUNK:Firebase Integration ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZgFW_B3rQ3YhZIAI3bCiXGH4caMas7c8",
+      authDomain: "memory-journey-happy-birthday.firebaseapp.com",
+      projectId: "memory-journey-happy-birthday",
+      storageBucket: "memory-journey-happy-birthday.firebasestorage.app",
+      messagingSenderId: "605088206818",
+      appId: "1:605088206818:web:6a0ae27d7158f698cb33bb",
+      measurementId: "G-DC8VXT4SMB",
+      databaseURL: "https://memory-journey-happy-birthday-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const dataRef = db.ref("birthday_journey");
+
+    dataRef.on("value", (snapshot) => {
+      const cloudData = snapshot.val();
+      if (cloudData) {
+        console.log("ซิงค์ข้อมูลล่าสุดจาก Firebase สำเร็จ:", cloudData);
+        appData = Object.assign(appData, cloudData);
+        
+        // Update DOM automatically when cloud data changes
+        if (typeof renderTimeline === 'function') {
+          renderTimeline();
+          applyDataToDOM();
+          updateLoveCounter();
+        }
+      }
+    });
+
+    function saveJourneyToCloud(newData) {
+      return dataRef.set(newData)
+        .then(() => {
+          showToast("ซิงค์ข้อมูลขึ้น Cloud เรียบร้อย! เครื่องแฟนจะเห็นข้อมูลตรงกันทันที ☁️");
+        })
+        .catch((error) => {
+          console.error("เกิดข้อผิดพลาดในการบันทึก:", error);
+          alert("เกิดข้อผิดพลาดในการบันทึกขึ้น Cloud: " + error.message);
+        });
+    }
+    // ---------------------------------------------
+
     function saveAppData() {
       try {
         localStorage.setItem('bday_app_data_v2', JSON.stringify(appData));
+        saveJourneyToCloud(appData); // Sync to Firebase
       } catch (err) {
         console.warn("Storage quota warning:", err);
       }
@@ -1183,6 +1230,12 @@
         return match ? match[1] : null;
     }
 
+    function loadYoutubeIframe(videoId, autoPlay) {
+       const container = document.getElementById('youtubePlayerContainer');
+       const ap = autoPlay ? 1 : 0;
+       container.innerHTML = `<iframe id="ytIframe" data-video-id="${videoId}" width="300" height="300" src="https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=${ap}&loop=1&playlist=${videoId}&controls=0" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture"></iframe>`;
+    }
+
     function playYoutubeMusic() {
       if (!appData || !appData.youtubeUrl) return;
       const videoId = extractVideoID(appData.youtubeUrl);
@@ -1191,14 +1244,24 @@
         startMusicLoop();
         return;
       }
-      const container = document.getElementById('youtubePlayerContainer');
-      // Create iframe dynamically on click to satisfy browser autoplay policies
-      container.innerHTML = `<iframe width="300" height="300" src="https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=0" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture"></iframe>`;
+      
+      const iframe = document.getElementById('ytIframe');
+      if (!iframe || iframe.getAttribute('data-video-id') !== videoId) {
+         // Create the iframe if it's new or changed. Use autoplay=1 to start it immediately.
+         loadYoutubeIframe(videoId, true);
+      } else {
+         // If it already exists, send play command via API
+         if (iframe.contentWindow) {
+           iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo' }), '*');
+         }
+      }
     }
 
     function pauseYoutubeMusic() {
-      const container = document.getElementById('youtubePlayerContainer');
-      container.innerHTML = ''; // Clear iframe to stop playback completely
+      const iframe = document.getElementById('ytIframe');
+      if (iframe && iframe.contentWindow) {
+         iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo' }), '*');
+      }
     }
 
     function playSoftTone(freq, duration = 1.6) {
@@ -1482,8 +1545,9 @@
       if (newYoutubeUrl !== oldYoutubeUrl) {
         if (newYoutubeUrl) {
           stopMusicLoop();
-          if (isPlayingMusic) {
-            playYoutubeMusic();
+          const videoId = extractVideoID(newYoutubeUrl);
+          if (videoId) {
+            loadYoutubeIframe(videoId, isPlayingMusic);
           }
         } else {
           pauseYoutubeMusic();
@@ -1507,6 +1571,12 @@
 
     // --- STREAMING_CHUNK:Initializing Application... ---
     window.addEventListener('DOMContentLoaded', () => {
+      if (appData && appData.youtubeUrl) {
+         const videoId = extractVideoID(appData.youtubeUrl);
+         if (videoId) {
+            loadYoutubeIframe(videoId, false);
+         }
+      }
       renderTimeline();
       applyDataToDOM();
       updateLoveCounter();
