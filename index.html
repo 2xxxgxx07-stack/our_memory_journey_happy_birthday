@@ -740,11 +740,24 @@
     let appData = JSON.parse(localStorage.getItem('bday_app_data_v2')) || initialDefaultData;
     let isViewOnlyMode = false;
 
-    // Check if loaded with compressed data payload from URL hash (Share Link Mode)
+    // Check if loaded with view mode hash or legacy compressed payload
     function checkUrlPayload() {
-      if (window.location.hash && window.location.hash.startsWith('#data=')) {
-        try {
-          const encoded = window.location.hash.replace('#data=', '');
+      if (window.location.hash) {
+        if (window.location.hash.startsWith('#view')) {
+          isViewOnlyMode = true;
+          document.body.classList.add('view-mode');
+          const modeText = document.getElementById('modeText');
+          const modeIcon = document.getElementById('modeIcon');
+          if (modeText && modeIcon) {
+            modeText.textContent = "Exit Preview";
+            modeIcon.setAttribute('data-lucide', 'edit-2');
+          }
+          return;
+        }
+
+        if (window.location.hash.startsWith('#data=')) {
+          try {
+            const encoded = window.location.hash.replace('#data=', '');
           const decompressed = LZString.decompressFromEncodedURIComponent(encoded);
           if (decompressed) {
             const parsed = JSON.parse(decompressed);
@@ -1425,10 +1438,8 @@
     const importBackupInput = document.getElementById('importBackupInput');
 
     function generateShareUrl() {
-      const serialized = JSON.stringify(appData);
-      const compressed = LZString.compressToEncodedURIComponent(serialized);
-      const baseUrl = window.location.origin + window.location.pathname;
-      return `${baseUrl}#data=${compressed}`;
+      const baseUrl = window.location.href.split('#')[0];
+      return `${baseUrl}#view`;
     }
 
     openShareModalBtn.addEventListener('click', () => {
