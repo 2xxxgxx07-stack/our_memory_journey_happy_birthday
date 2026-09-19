@@ -17,6 +17,8 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- LZ-String: URL Compression for seamless cross-device sharing -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -506,12 +508,15 @@
       </div>
 
       <!-- Settings Tabs -->
-      <div class="flex border-b border-slate-200 gap-4 text-xs font-semibold">
-        <button id="tabBtnGeneral" class="tab-btn pb-2 text-rose-600 border-b-2 border-rose-500">
+      <div class="flex border-b border-slate-200 gap-4 text-xs font-semibold overflow-x-auto">
+        <button id="tabBtnGeneral" class="tab-btn pb-2 text-rose-600 border-b-2 border-rose-500 whitespace-nowrap">
           ข้อมูลทั่วไป & วันที่
         </button>
-        <button id="tabBtnLetter" class="tab-btn pb-2 text-slate-400 hover:text-slate-600">
+        <button id="tabBtnLetter" class="tab-btn pb-2 text-slate-400 hover:text-slate-600 whitespace-nowrap">
           จดหมายรัก & คูปอง
+        </button>
+        <button id="tabBtnMusic" class="tab-btn pb-2 text-slate-400 hover:text-slate-600 whitespace-nowrap">
+          เพลงพื้นหลัง (YouTube)
         </button>
       </div>
 
@@ -556,6 +561,15 @@
         </div>
       </div>
 
+      <!-- TAB 3: Music (YouTube) -->
+      <div id="tabContentMusic" class="space-y-4 text-sm hidden">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">ลิงก์เพลงจาก YouTube (YouTube URL)</label>
+          <input id="inputYoutubeUrl" type="text" placeholder="เช่น https://www.youtube.com/watch?v=..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-400" />
+          <p class="text-xs text-slate-500 mt-1">เว้นว่างไว้หากต้องการใช้เสียงดนตรีกล่องเพลงแบบดั้งเดิม</p>
+        </div>
+      </div>
+
       <!-- Action Footer -->
       <div class="flex justify-between items-center pt-3 border-t">
         <button id="resetDefaultsBtn" class="text-xs text-slate-400 hover:text-rose-600 underline">
@@ -591,11 +605,14 @@
 
       <!-- Generated QR Code Container -->
       <div class="flex flex-col items-center justify-center p-4 bg-rose-50/60 rounded-2xl border border-rose-100 space-y-3">
-        <div class="p-3 bg-white rounded-2xl shadow-md inline-block">
-          <img id="shareQrImage" src="" alt="QR Code" class="w-44 h-44 sm:w-48 sm:h-48 object-contain" />
+        <div class="p-3 bg-white rounded-2xl shadow-md flex flex-col items-center justify-center">
+          <div id="qrCodeDiv" class="flex items-center justify-center w-44 h-44 sm:w-48 sm:h-48 overflow-hidden"></div>
+          <p id="qrErrorMsg" class="hidden text-xs text-rose-500 font-medium mt-2 max-w-[12rem] text-center">
+            ⚠️ ข้อมูลยาวเกินไปสำหรับสร้าง QR Code กรุณาคัดลอกลิงก์ด้านล่างส่งแทน
+          </p>
         </div>
         <p class="text-xs text-slate-600">
-          สแกนด้วยมือถือ หรือคลิกขวาบันทึกรูป QR ไปปริ้นต์แปะบนการ์ดของขวัญได้เลย 🎁
+          สแกนด้วยมือถือ หรือแคปจอ QR Code ไปปริ้นต์แปะบนการ์ดของขวัญได้เลย 🎁
         </p>
       </div>
 
@@ -640,6 +657,11 @@
     <span id="toastMessage">คัดลอกลิงก์สำเร็จแล้ว!</span>
   </div>
 
+  <!-- YouTube Player Container (Invisible) -->
+  <div id="youtubePlayerContainer" style="position: fixed; bottom: -500px; right: -500px; width: 300px; height: 300px;">
+    <div id="youtubePlayer"></div>
+  </div>
+
   <!-- Footer -->
   <footer class="py-8 text-center text-xs text-slate-400 border-t border-rose-100 bg-[#FFF9FA]">
     <p>Crafted with endless love for your special day ❤️</p>
@@ -655,6 +677,7 @@
       startDate: "2023-01-14T19:00",
       couponTitle: "สิทธิ์สั่งอะไรก็ได้ 1 วันเต็ม + ดินเนอร์มื้อโปรด",
       couponDesc: "ไม่ว่าจะอยากกินโอมากาเสะ ชาบู หรือให้ตามใจทั้งวัน คูปองนี้ใช้ได้ไม่มีวันหมดอายุ!",
+      youtubeUrl: "",
       letterContent: `สุขสันต์วันเกิดนะ! ขอให้ปีนี้เป็นปีที่ใจดีกับเธอ มีรอยยิ้มเยอะๆ สุขภาพแข็งแรง ไม่ปวดหลังเวลาทำงานนะ\n\nขอบคุณที่คอยอยู่ข้างๆ กัน คอยหัวเราะด้วยกัน และเป็นความสบายใจให้เค้าเสมอ ไม่ว่าจะเจอวันที่เหนื่อยแค่ไหน แค่ได้คุยกับเธอก็หายเหนื่อยแล้ว\n\nสัญญาว่าจะอยู่ฉลองวันเกิดให้เธอแบบนี้ไปอีกหลายๆ ปีเลย รักเธอที่สุดในโลกเลยนะ ❤️`,
       milestones: [
         {
@@ -1148,11 +1171,35 @@
       }, 400);
     });
 
-    // --- STREAMING_CHUNK:Synthesizer Music (Web Audio API)... ---
+    // --- STREAMING_CHUNK:Synthesizer Music (Web Audio API) & YouTube... ---
     let audioCtx = null;
     let isPlayingMusic = false;
     let musicInterval = null;
     const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+
+    function extractVideoID(url) {
+        var regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([^"&?\/\s]{11})/i;
+        var match = url.match(regExp);
+        return match ? match[1] : null;
+    }
+
+    function playYoutubeMusic() {
+      if (!appData || !appData.youtubeUrl) return;
+      const videoId = extractVideoID(appData.youtubeUrl);
+      if (!videoId) {
+        showToast("ลิงก์ YouTube ไม่ถูกต้อง ระบบจึงเล่นเสียงกล่องดนตรีแทน 🎶");
+        startMusicLoop();
+        return;
+      }
+      const container = document.getElementById('youtubePlayerContainer');
+      // Create iframe dynamically on click to satisfy browser autoplay policies
+      container.innerHTML = `<iframe width="300" height="300" src="https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=0" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture"></iframe>`;
+    }
+
+    function pauseYoutubeMusic() {
+      const container = document.getElementById('youtubePlayerContainer');
+      container.innerHTML = ''; // Clear iframe to stop playback completely
+    }
 
     function playSoftTone(freq, duration = 1.6) {
       if (!audioCtx) return;
@@ -1211,11 +1258,19 @@
     musicToggleBtn.addEventListener('click', () => {
       isPlayingMusic = !isPlayingMusic;
       if (isPlayingMusic) {
-        startMusicLoop();
+        if (appData.youtubeUrl) {
+          playYoutubeMusic();
+        } else {
+          startMusicLoop();
+        }
         musicIconContainer.innerHTML = '<i data-lucide="music" class="w-4 h-4 text-rose-500 animate-bounce"></i>';
         musicStatusText.textContent = "Melody On";
       } else {
-        stopMusicLoop();
+        if (appData.youtubeUrl) {
+          pauseYoutubeMusic();
+        } else {
+          stopMusicLoop();
+        }
         musicIconContainer.innerHTML = '<i data-lucide="volume-x" class="w-4 h-4"></i>';
         musicStatusText.textContent = "Play Melody";
       }
@@ -1233,21 +1288,36 @@
     // Tabs switching
     const tabBtnGeneral = document.getElementById('tabBtnGeneral');
     const tabBtnLetter = document.getElementById('tabBtnLetter');
+    const tabBtnMusic = document.getElementById('tabBtnMusic');
     const tabContentGeneral = document.getElementById('tabContentGeneral');
     const tabContentLetter = document.getElementById('tabContentLetter');
+    const tabContentMusic = document.getElementById('tabContentMusic');
 
     tabBtnGeneral.addEventListener('click', () => {
-      tabBtnGeneral.className = 'tab-btn pb-2 text-rose-600 border-b-2 border-rose-500';
-      tabBtnLetter.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600';
+      tabBtnGeneral.className = 'tab-btn pb-2 text-rose-600 border-b-2 border-rose-500 whitespace-nowrap';
+      tabBtnLetter.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600 whitespace-nowrap';
+      tabBtnMusic.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600 whitespace-nowrap';
       tabContentGeneral.classList.remove('hidden');
       tabContentLetter.classList.add('hidden');
+      tabContentMusic.classList.add('hidden');
     });
 
     tabBtnLetter.addEventListener('click', () => {
-      tabBtnLetter.className = 'tab-btn pb-2 text-rose-600 border-b-2 border-rose-500';
-      tabBtnGeneral.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600';
+      tabBtnLetter.className = 'tab-btn pb-2 text-rose-600 border-b-2 border-rose-500 whitespace-nowrap';
+      tabBtnGeneral.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600 whitespace-nowrap';
+      tabBtnMusic.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600 whitespace-nowrap';
       tabContentLetter.classList.remove('hidden');
       tabContentGeneral.classList.add('hidden');
+      tabContentMusic.classList.add('hidden');
+    });
+
+    tabBtnMusic.addEventListener('click', () => {
+      tabBtnMusic.className = 'tab-btn pb-2 text-rose-600 border-b-2 border-rose-500 whitespace-nowrap';
+      tabBtnGeneral.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600 whitespace-nowrap';
+      tabBtnLetter.className = 'tab-btn pb-2 text-slate-400 hover:text-slate-600 whitespace-nowrap';
+      tabContentMusic.classList.remove('hidden');
+      tabContentGeneral.classList.add('hidden');
+      tabContentLetter.classList.add('hidden');
     });
 
     function applyDataToDOM() {
@@ -1268,6 +1338,7 @@
       document.getElementById('inputLetterContent').value = appData.letterContent;
       document.getElementById('inputCouponTitle').value = appData.couponTitle;
       document.getElementById('inputCouponDesc').value = appData.couponDesc;
+      document.getElementById('inputYoutubeUrl').value = appData.youtubeUrl || '';
       customModal.classList.remove('hidden');
     });
 
@@ -1301,13 +1372,30 @@
       const fullUrl = generateShareUrl();
       shareUrlInput.value = fullUrl;
 
-      // Generate dynamic QR Code via API
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fullUrl)}`;
-      shareQrImage.src = qrApiUrl;
+      // Generate dynamic QR Code locally
+      const qrCodeDiv = document.getElementById('qrCodeDiv');
+      const qrErrorMsg = document.getElementById('qrErrorMsg');
+      qrCodeDiv.innerHTML = '';
+      
+      try {
+        new QRCode(qrCodeDiv, {
+          text: fullUrl,
+          width: 180,
+          height: 180,
+          colorDark: "#0f172a",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.L
+        });
+        qrCodeDiv.classList.remove('hidden');
+        qrErrorMsg.classList.add('hidden');
+      } catch (err) {
+        qrCodeDiv.classList.add('hidden');
+        qrErrorMsg.classList.remove('hidden');
+      }
 
       // Length warning if images make link excessively long
       const urlStatusNote = document.getElementById('urlStatusNote');
-      if (fullUrl.length > 30000) {
+      if (fullUrl.length > 2000) {
         urlStatusNote.innerHTML = `⚠️ <span class="text-amber-600 font-medium">รูปที่อัปโหลดมีขนาดค่อนข้างใหญ่ แนะนำให้สแกนผ่าน QR Code หรือใช้ลิงก์รูปภาพออนไลน์ (เช่น Imgur/Unsplash) จะส่งผ่านแชทได้ง่ายกว่าครับ</span>`;
       } else {
         urlStatusNote.innerHTML = `💡 ระบบบีบอัดข้อมูลรูปและข้อความใส่ในลิงก์ให้อัตโนมัติ โดยไม่ต้องมีเซิร์ฟเวอร์`;
@@ -1380,12 +1468,30 @@
       appData.letterContent = document.getElementById('inputLetterContent').value.trim() || appData.letterContent;
       appData.couponTitle = document.getElementById('inputCouponTitle').value.trim() || appData.couponTitle;
       appData.couponDesc = document.getElementById('inputCouponDesc').value.trim() || appData.couponDesc;
+      
+      const newYoutubeUrl = document.getElementById('inputYoutubeUrl').value.trim();
+      const oldYoutubeUrl = appData.youtubeUrl;
+      appData.youtubeUrl = newYoutubeUrl;
 
       saveAppData();
       applyDataToDOM();
       updateLoveCounter();
       closeModal();
       launchRomanticConfetti();
+
+      if (newYoutubeUrl !== oldYoutubeUrl) {
+        if (newYoutubeUrl) {
+          stopMusicLoop();
+          if (isPlayingMusic) {
+            playYoutubeMusic();
+          }
+        } else {
+          pauseYoutubeMusic();
+          if (isPlayingMusic) {
+            startMusicLoop();
+          }
+        }
+      }
     });
 
     resetDefaultsBtn.addEventListener('click', () => {
